@@ -1,24 +1,23 @@
 import cv2
 
-cap = cv2.VideoCapture(0)
+video_cap = cv2.VideoCapture(0)  # change to 1 or 2 if needed
 
-if not cap.isOpened(): #checks if camera is opened
+if not video_cap.isOpened():
     print("Error: Could not open webcam")
     exit()
 
-while True: #infinte loop
-    ret, frame = cap.read()
+while True:
+    ret, frame = video_cap.read()
     if not ret:
         print("Error: Failed to capture frame")
         break
 
     cv2.imshow("Webcam Feed", frame)
+    # print(ret) //to check if frames are being captured
 
-    
-    if cv2.waitKey(30) & ord('q'):
+
+    if cv2.waitKey(10) == ord('q'): #0xff for 
         break
 
-cap.release() #releases the camera for other usage
-cv2.destroyAllWindows() #
-
-
+video_cap.release() #release camera for other usage
+cv2.destroyAllWindows() #close webcam 
