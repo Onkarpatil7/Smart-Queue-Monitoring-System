@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Queue Dashboard</title>
+  <style>
+    body { font-family: Arial; background: #121212; color: #fff; text-align: center; }
+    h1 { color: #00BFFF; }
+    table { margin: 20px auto; border-collapse: collapse; width: 80%; }
+    th, td { border: 1px solid #444; padding: 10px; }
+    th { background: #333; }
+    td { background: #1e1e1e; }
+  </style>
+</head>
+<body>
+  <h1>AI Queue Detector Dashboard</h1>
+  <p>Shows live queue info from PostgreSQL</p>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Timestamp</th>
+        <th>Wait Time (s)</th>
+      </tr>
+    </thead>
+    <tbody id="data-table"></tbody>
+  </table>
+
+  <script>
+    async function fetchData() {
+      const res = await fetch("http://127.0.0.1:8000/getData/");
+      const data = await res.json();
+      const table = document.getElementById("data-table");
+      table.innerHTML = "";
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.id}</td>
+          <td>${new Date(row.timeStamp).toLocaleTimeString()}</td>
+          <td>${row.waitTime.toFixed(1)}</td>
+        `;
+        table.appendChild(tr);
+      });
+    }
+
+    // Fetch every 5 seconds
+    fetchData();
+    setInterval(fetchData, 5000);
+  </script>
+</body>
+</html>

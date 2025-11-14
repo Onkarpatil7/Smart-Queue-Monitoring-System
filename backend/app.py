@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from database import sessionLocal
 from models import queueData 
+from fastapi.responses import JSONResponse #to return json response
 
 app = FastAPI()
 
@@ -33,7 +34,7 @@ def update_detection(data: DetectionData, db: Session = Depends(get_db)):
         timeStamp=data.timeStamp,   
         waitTime=data.waitTime                   # Save the person's waiting time
     )
-
+    
     db.add(entry)
     db.commit()
     db.refresh(entry)  # Refresh to get any auto-generated fields
@@ -45,3 +46,19 @@ def update_detection(data: DetectionData, db: Session = Depends(get_db)):
         "waitTime": entry.waitTime
     }
 
+
+@app.get("/getData/")
+def get_detection_data(db: Session = Depends(get_db)):
+    """
+    This route retrieves all detection data from the database.
+    """
+    data_entries = db.query(queueData).all()
+    results = [
+        {
+            "id": entry.id,
+            "timeStamp": entry.timeStamp.isoformat(),
+            "waitTime": entry.waitTime
+        }
+        for entry in data_entries
+    ]
+    return {JSONResponse(content=results)}
