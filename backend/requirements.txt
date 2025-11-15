@@ -6,3 +6,4 @@ uvicorn #server to run fastapi
 SQLAlchemy #It is Object relational mapping makes easy to work with database
 psycopg2-binary #connector to postgreSQL
 python-dotenv #uses to store db credentials
+requests #HTTP library for making API requests
