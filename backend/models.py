@@ -18,3 +18,14 @@ class queueData(Base):
     waitTime=Column(Float)
     alert=Column(Enum(AlertStatus),nullable=True,default=AlertStatus.NO_ALERT)
 
+
+class ContactMessage(Base):
+    __tablename__="contact_messages"
+
+    id=Column(Integer,primary_key=True,index=True)
+    name=Column(String,nullable=False)
+    email=Column(String,nullable=False)
+    message=Column(String,nullable=False)
+    created_at=Column(DateTime,default=datetime.now)
+
+

@@ -1,0 +1,196 @@
+:root{
+      --bg1: #071028;
+      --bg2: #0d2a4a;
+      --glass: rgba(255,255,255,0.06);
+      --glass-2: rgba(255,255,255,0.04);
+      --accent: #3ddc97;
+      --accent-2: #61dafb;
+      --muted: rgba(255,255,255,0.7);
+      --card-radius: 16px;
+      --shadow: 0 8px 30px rgba(2,6,23,0.6);
+      --glass-border: rgba(255,255,255,0.06);
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box}
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(135deg,var(--bg1) 0%, var(--bg2) 100%);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      color:#eaf2ff;
+    }
+
+    /* Layout */
+    .app{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      min-height:100vh;
+      gap:24px;
+      padding:32px;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      border-radius:12px;
+      padding:20px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      backdrop-filter: blur(8px) saturate(120%);
+      box-shadow:var(--shadow);
+      border: 1px solid var(--glass-border);
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      position:sticky;
+      top:32px;
+      height:calc(100vh - 64px);
+    }
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .logo{
+      width:48px; height:48px; border-radius:12px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      font-weight:800;color:#042022;font-size:18px;
+      box-shadow: 0 6px 18px rgba(3, 192, 162, 0.12);
+    }
+    .brand h1{font-size:16px;margin:0}
+    .brand p{font-size:12px;margin:0;color:var(--muted)}
+
+    .nav{
+      display:flex;flex-direction:column;gap:8px;margin-top:6px;
+    }
+    .nav button{
+      display:flex;align-items:center;gap:12px;
+      padding:10px 12px;border-radius:10px;border: none;background:transparent;
+      color:inherit;font-weight:600;font-size:14px;cursor:pointer;
+      transition: all .18s ease;
+      text-align:left;
+    }
+    .nav button:hover{transform:translateX(6px)}
+    .nav button.active{
+      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      box-shadow: 0 6px 24px rgba(2,6,23,0.5);
+      border-left:3px solid var(--accent);
+    }
+
+    .sidebar .mini-stats{
+      margin-top:auto;
+      display:grid;grid-template-columns:1fr;gap:8px;
+    }
+    .stat{
+      padding:12px;border-radius:10px;background:var(--glass);
+      border:1px solid rgba(255,255,255,0.03);font-size:13px;
+    }
+
+    /* Header + Content */
+    .content{
+      padding:20px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow:var(--shadow);
+      border:1px solid var(--glass-border);
+      min-height:100vh;
+      overflow:auto;
+    }
+
+    header.topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;
+    }
+    .search{
+      display:flex;align-items:center;gap:8px;background:var(--glass-2);padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,0.02);
+      width:420px;
+    }
+    .search input{background:transparent;border:0;outline:none;color:var(--muted);font-weight:600;}
+    .actions{display:flex;align-items:center;gap:12px}
+    .btn{
+      padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent-2),var(--accent));cursor:pointer;font-weight:700;color:#042022;
+      box-shadow: 0 6px 20px rgba(61,220,151,0.12);
+    }
+
+    /* Dashboard grid */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:18px;
+    }
+    .card{
+      grid-column: span 4;
+      padding:16px;border-radius:var(--card-radius);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.015));
+      border:1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 12px 30px rgba(2,6,23,0.45);
+      min-height:110px;
+    }
+    .card.large{grid-column: span 8; min-height: 340px;}
+    .card.video{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center}
+    .card h3{margin:0;font-size:14px}
+    .kpi{font-size:34px;font-weight:800;margin-top:6px}
+
+    /* small UI */
+    .row{display:flex;gap:12px;align-items:center}
+    .chip{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-weight:700}
+
+    /* Responsive */
+    @media (max-width:1000px){
+      .app{grid-template-columns: 1fr; padding:18px;}
+      .sidebar{position:relative;height:auto;order:2}
+      .content{order:1}
+      .card{grid-column: span 12}
+      .card.large{grid-column: span 12}
+      .search{width:100%}
+    }
+
+    /* Animations */
+    .fade-in{animation: fadeIn .45s ease both}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+    /* Page sections */
+    .page{display:none}
+    .page.active{display:block}
+
+    section.page {
+      width: 100%;
+      min-height: 100%;
+    }
+
+    section.page > .grid {
+      min-height: 100vh;
+    }
+
+    section.page > div:not(.grid) {
+      width: 100%;
+    }
+
+    /* Form styling */
+    input[type="text"],
+    input[type="email"],
+    textarea {
+      background: rgba(255,255,255,0.05) !important;
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      color: #eaf2ff !important;
+    }
+
+    input[type="text"]::placeholder,
+    input[type="email"]::placeholder,
+    textarea::placeholder {
+      color: rgba(255,255,255,0.4);
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    textarea:focus {
+      background: rgba(255,255,255,0.08) !important;
+      border: 1px solid rgba(61,220,151,0.5) !important;
+      outline: none;
+      box-shadow: 0 0 10px rgba(61,220,151,0.2);
+    }
+
+    /* Footer small */
+    footer{margin-top:22px;color:rgba(255,255,255,0.5);font-size:13px}
+    /* Accessibility focus */
+    .nav button:focus{outline:2px dashed rgba(97,218,251,0.22); outline-offset:4px}

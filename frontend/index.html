@@ -1,52 +1,655 @@
-<!DOCTYPE html>
+
+<!-- Save this as index.html (fixed, nav + recent entries + WS preserved) -->
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Queue Dashboard</title>
-  <style>
-    body { font-family: Arial; background: #121212; color: #fff; text-align: center; }
-    h1 { color: #00BFFF; }
-    table { margin: 20px auto; border-collapse: collapse; width: 80%; }
-    th, td { border: 1px solid #444; padding: 10px; }
-    th { background: #333; }
-    td { background: #1e1e1e; }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+  <title>Smart Queue Monitoring System -x Dashboard</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a2d9b6f9f8.js" crossorigin="anonymous"></script>
+
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>AI Queue Detector Dashboard</h1>
-  <p>Shows live queue info from PostgreSQL</p>
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Timestamp</th>
-        <th>Wait Time (s)</th>
-      </tr>
-    </thead>
-    <tbody id="data-table"></tbody>
-  </table>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar fade-in" aria-label="Main sidebar">
+      <div class="brand">
+        <div class="logo">QD</div>
+        <div>
+          <h1>Queue Detector</h1>
+          <p>AI · Vision · Analytics</p>
+        </div>
+      </div>
 
-  <script>
-    async function fetchData() {
-      const res = await fetch("http://127.0.0.1:8000/getData/");
-      const data = await res.json();
-      const table = document.getElementById("data-table");
-      table.innerHTML = "";
+      <nav class="nav" role="navigation" aria-label="Primary">
+        <button class="nav-btn active" data-target="home" aria-current="page"><i class="fas fa-home"></i> Home</button>
+        <!--<button class="nav-btn" data-target="status"><i class="fas fa-list-ol"></i> Queue Status</button>
+        <button class="nav-btn" data-target="count"><i class="fas fa-hashtag"></i> Total Count</button>
+        <button class="nav-btn" data-target="wait"><i class="fas fa-hourglass-half"></i> Avg Waiting Time</button>-->
+        <button class="nav-btn" data-target="admin"><i class="fas fa-user-shield"></i> Admin</button>
+        <button class="nav-btn" data-target="contact"><i class="fas fa-envelope"></i> Contact</button>
+      </nav>
 
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.id}</td>
-          <td>${new Date(row.timeStamp).toLocaleTimeString()}</td>
-          <td>${row.waitTime.toFixed(1)}</td>
-        `;
-        table.appendChild(tr);
+      <div class="mini-stats" aria-hidden="false">
+        <div class="stat">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:12px;color:var(--muted)">Live Queue Now</div>
+              <div class="kpi" id="kpi-live">0</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:12px;color:var(--muted)">Processed Today</div>
+              <div style="font-weight:800">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:12px;color:var(--muted)">Avg Wait (min)</div>
+              <div class="kpi" id="kpi-avg"></div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:12px;color:var(--muted)">Longest Wait</div>
+              <div style="font-weight:800" id="kpi-longest">0</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <footer>
+        <div>Made for TY CSE project • Queue Detection</div>
+        <div style="margin-top:8px;font-size:12px;color:rgba(255,255,255,0.45)">Prachi — UI & Frontend</div>
+      </footer>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="content" id="main-content">
+      <header class="topbar">
+        <div style="display:flex;gap:12px;align-items:center">
+          <h2 id="page-title" style="margin:0">Dashboard</h2>
+          <div class="chip" id="chip-live">Simulation</div>
+        </div>
+      </header>
+
+      <!-- PAGES -->
+      <!-- HOME -->
+      <section class="page active" id="home">
+        <div class="grid" style="align-items:start">
+         
+          <div class="card">
+            <h3>Current Queue</h3>
+            <div style="margin-top:8px;color:var(--muted)">People currently waiting</div>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+              <div style="font-size:28px;font-weight:800" id="home-current">0</div>
+              <div style="font-size:13px;color:var(--muted)">Visitors in queue</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Total Count</h3>
+            <div id="home-total" class="kpi">0</div>
+          </div>
+          
+          <div class="card">
+            <h3>Alert Status</h3>
+            <div id="home-alert" class="kpi">Off</div>
+          </div>
+          
+          <div class="card">
+            <h3>Entered</h3>
+            <div id="enter-total" class="kpi">0</div>
+          </div>
+
+          <div class="card">
+            <h3>Exited</h3>
+            <div id="exit-total" class="kpi">0</div>
+          </div>
+
+          <!-- Small history table -->
+          <div class="card" style="grid-column: span 12;">
+            <h3>Recent Events</h3>
+            <div style="margin-top:10px;color:var(--muted);font-size:13px">Last 10 detections and actions</div>
+            <div style="margin-top:12px;overflow:auto">
+              <table style="width:100%;border-collapse:collapse">
+                <thead style="text-align:left;color:rgba(255,255,255,0.6);font-size:19px">
+                  <tr>
+                    <th style="padding:8px 6px">ID</th>
+                    <th style="padding:8px 6px">Entry</th>
+                    <th style="padding:8px 6px">Exit</th>
+                    <th style="padding:8px 6px">Wait</th>
+                    <th style="padding:8px 6px">Alert</th>
+                  </tr>
+                </thead>
+                <tbody id="events-tbody" style="font-size:13px;color:var(--muted)"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- QUEUE STATUS -->
+      <section class="page" id="status">
+        <h3>Queue Status</h3>
+        <div style="color:var(--muted);margin-top:6px">Live status across cameras/points.</div>
+
+        <div style="margin-top:16px" class="grid">
+          <div class="card" style="grid-column:span 4">
+            <h3>Camera 1</h3>
+            <div style="margin-top:8px;color:var(--muted)">Front Entrance</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+              <div>
+                <div style="font-size:28px;font-weight:800" id="cam1-count">0</div>
+                <div style="font-size:12px;color:var(--muted)">People waiting</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:12px;color:var(--muted)">Avg Wait</div>
+                <div style="font-weight:800" id="cam1-avg">0m</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="grid-column:span 4">
+            <h3>System Health</h3>
+            <div style="margin-top:8px;color:var(--muted)">CPU · GPU · Model</div>
+            <div style="margin-top:12px">
+              <div style="font-size:13px;color:var(--muted)">Model</div>
+              <div style="font-weight:800">yolov8n / custom</div>
+              <div style="margin-top:8px;font-size:13px;color:var(--muted)">Last inference</div>
+              <div style="font-weight:800" id="last-infer">—</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:18px">
+          <canvas id="statusChart" height="120"></canvas>
+        </div>
+      </section>
+
+      <!-- TOTAL COUNT -->
+      <section class="page" id="count">
+        <h3>Total Count</h3>
+        <div style="color:var(--muted);margin-top:6px">Aggregated visitors and processed counts.</div>
+
+        <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
+          <div class="card" style="min-width:220px">
+            <div style="font-size:12px;color:var(--muted)">Today</div>
+            <div style="font-size:28px;font-weight:800" id="total-today">0</div>
+          </div>
+          <div class="card" style="min-width:220px">
+            <div style="font-size:12px;color:var(--muted)">This Week</div>
+            <div style="font-size:28px;font-weight:800" id="total-week">0</div>
+          </div>
+          <div class="card" style="min-width:220px">
+            <div style="font-size:12px;color:var(--muted)">Total (all-time)</div>
+            <div style="font-size:28px;font-weight:800" id="total-all">0</div>
+          </div>
+        </div>
+
+        <div style="margin-top:18px">
+          <canvas id="countChart" height="140"></canvas>
+        </div>
+      </section>
+
+      <!-- AVERAGE WAIT -->
+      <section class="page" id="wait">
+        <h3>Average Waiting Time</h3>
+        <div style="color:var(--muted);margin-top:6px">Trends and distribution of waiting times.</div>
+
+        <div style="margin-top:16px" class="grid">
+          <div class="card" style="grid-column:span 6">
+            <h3>Avg Wait (last 24 hours)</h3>
+            <canvas id="waitChart" height="160"></canvas>
+          </div>
+
+          <div class="card" style="grid-column:span 6">
+            <h3>Distribution</h3>
+            <canvas id="distChart" height="160"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ADMIN -->
+      <section class="page" id="admin">
+        <h3>Admin Panel</h3>
+        <div style="color:var(--muted);margin-top:6px">Controls and configuration for models and camera.</div>
+
+        <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
+          <div class="card" style="min-width:320px">
+            <h3>Model Control</h3>
+            <div style="margin-top:8px;color:var(--muted)">Switch model</div>
+            <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+              <select id="select-model" style="padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)">
+                <option value="yolov8n">yolov8n (fast)</option>
+                <option value="yolov8s">yolov8s (balanced)</option>
+                <option value="custom">custom (uploaded)</option>
+              </select>
+              <button class="btn" id="btn-update-model" style="padding:8px 10px">Update</button>
+            </div>
+          </div>
+
+          <div class="card" style="min-width:320px">
+            <h3>Camera Management</h3>
+            <div style="margin-top:8px;color:var(--muted)">Add / test camera streams</div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <input id="camera-url" placeholder="Add camera" style="flex:1;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)"/>
+              <button class="btn" id="btn-add-camera" style="padding:8px 10px">Add</button>
+            </div>
+          </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="page" id="contact">
+        <div class="grid" style="align-items:start">
+          <div style="grid-column: span 12;">
+            <h3>Contact</h3>
+            <div style="color:var(--muted);margin-top:6px">Get in touch — project queries and feedback.</div>
+          </div>
+          <div class="card" style="grid-column: span 6; min-width:360px; margin-bottom: 300px;">
+            <h3>Send us a Message</h3>
+            <form id="contact-form" style="margin-top:12px">
+              <div style="display:flex;gap:8px;flex-direction:column">
+                <label style="font-size:13px;color:var(--muted)">Name</label>
+                <input type="text" required id="cf-name" placeholder="Your name" style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);color:#eaf2ff"/>
+                <label style="font-size:13px;color:var(--muted)">Email</label>
+                <input type="email" required id="cf-email" placeholder="your-email@example.com" style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);color:#eaf2ff"/>
+                <label style="font-size:13px;color:var(--muted)">Message</label>
+                <textarea required id="cf-msg" placeholder="Your message..." rows="5" style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);color:#eaf2ff"></textarea>
+                <div style="display:flex;justify-content:flex-end">
+                  <button class="btn" type="submit">Get in Touch</button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="card" style="grid-column: span 6;">
+            <h3>Contact Info</h3>
+            <div style="margin-top:8px;color:var(--muted);font-size:13px">
+              <div><strong>Team:</strong>Smart Queue Monitoring System</div>
+              <div style="margin-top:8px"><strong>Repo:</strong> <a href="https://github.com/Onkarpatil7/AI-Queue-Detector-Demo">Github Repo</a> </div>
+              <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1)">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+
+  <script>    
+    (function () {
+      'use strict';
+    
+      // ---------------- CONFIG ----------------
+      const WS_URL = "ws://127.0.0.1:8000/ws/detections";
+      const API_RECENT = "http://127.0.0.1:8000/recent-entries";
+      const API_TOTAL_COUNT = "http://127.0.0.1:8000/total-count";
+      const API_AVG_WAITTIME = "http://127.0.0.1:8000/avg-waittime";
+    
+      const KEEPALIVE_MS = 10000;
+      const RECONNECT_BASE_MS = 1000;
+      const RECONNECT_MAX_MS = 15000;
+    
+      // ---------------- STATE ----------------
+      let socket = null;
+      let keepAliveTimer = null;
+      let reconnectTimer = null;
+      let reconnectDelay = RECONNECT_BASE_MS;
+    
+      // ---------------- SAFE DOM HELPERS ----------------
+      function safeEl(id) {
+        return document.getElementById(id) || null;
+      }
+    
+      function safeSetText(id, text) {
+        const el = safeEl(id);
+        if (el) el.textContent = text;
+      }
+    
+      // ---------------- LOAD LAST 10 ENTRIES FROM DB ----------------
+      async function loadRecentEntries() {
+        try {
+          const res = await fetch(API_RECENT);
+          const rows = await res.json();
+    
+          const tbody = safeEl("events-tbody");
+          if (!tbody) return;
+    
+          tbody.innerHTML = "";
+    
+          if (!Array.isArray(rows) || rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4">No recent data</td></tr>`;
+            return;
+          }
+    
+          rows.forEach(r => {
+            const isAlert =
+              r.alert === 1 ||
+              (typeof r.alert === "string" && r.alert.toLowerCase().includes("alert"));
+    
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td style="padding:8px 6px">${r.id}</td>
+              <td style="padding:8px 6px">${new Date(r.entryTime).toLocaleTimeString()}</td>
+              <td style="padding:8px 6px">${new Date(r.exitTime).toLocaleTimeString()}</td>
+              <td style="padding:8px 6px">${Number(r.waitTime).toFixed(1)} sec</td>
+              <td style="padding:8px 6px">${isAlert ? "⚠ Crowd" : "Normal"}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+    
+        } catch (err) {
+          console.error("Failed to load recent DB entries:", err);
+        }
+      }
+
+      // Track last known values to prevent flickering to 0
+      let lastKnownTotalCount = 0;
+      let lastKnownAvgWait = 0;
+      let totalCountPollId = null;
+      let avgWaitPollId = null;
+
+      // ---------------- LOAD TOTAL COUNT FROM DB ----------------
+      async function loadTotalCount() {
+        try {
+          const res = await fetch(API_TOTAL_COUNT);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const totalCount = data.total_count ?? null;
+          
+          // Only update if we got a valid number
+          if (typeof totalCount === 'number') {
+            // Only update DOM if value changed (prevents flicker)
+            if (totalCount !== lastKnownTotalCount) {
+              lastKnownTotalCount = totalCount;
+              safeSetText("home-total", totalCount);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load total count:", err);
+          // Don't update UI on error; keep last known value
+        }
+      }
+
+      // ---------------- LOAD AVERAGE WAIT TIME FROM DB ----------------
+      async function loadAvgWaitTime() {
+        try {
+          const res = await fetch(API_AVG_WAITTIME);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const avgWait = data.average_wait_time ?? null;
+          
+          // Only update if we got a valid number
+          if (typeof avgWait === 'number' && avgWait >= 0) {
+            const avgWaitMin = (avgWait / 60).toFixed(1);
+            // Only update DOM if value changed (prevents flicker)
+            if (Number(avgWaitMin) !== lastKnownAvgWait) {
+              lastKnownAvgWait = Number(avgWaitMin);
+              safeSetText("kpi-avg", avgWaitMin);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load average wait time:", err);
+          // Don't update UI on error; keep last known value
+        }
+      }
+      
+      // Stop polling once WebSocket is connected
+      function stopPolling() {
+        if (totalCountPollId) clearInterval(totalCountPollId);
+        if (avgWaitPollId) clearInterval(avgWaitPollId);
+      }
+    
+      // ---------------- CHART INIT ----------------
+      function initChartsSafely() {
+        const chartEl = safeEl("myChart");
+        if (!chartEl) return;
+        if (typeof Chart === "undefined") return;
+    
+        const ctx = chartEl.getContext("2d");
+        if (!ctx) return;
+    
+        window.__liveInsideChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: [],
+            datasets: [{
+              label: "People inside",
+              data: [],
+              fill: false,
+              tension: 0.25
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { display: false }, y: { beginAtZero: true } }
+          }
+        });
+      }
+    
+      function pushToChart(value) {
+        const c = window.__liveInsideChart;
+        if (!c) return;
+    
+        c.data.labels.push(new Date().toLocaleTimeString());
+        c.data.datasets[0].data.push(value);
+    
+        if (c.data.labels.length > 30) {
+          c.data.labels.shift();
+          c.data.datasets[0].data.shift();
+        }
+    
+        c.update("none");
+      }
+    
+      // ---------------- FIXED PAGE NAVIGATION ----------------
+      document.addEventListener("DOMContentLoaded", () => {
+        const navButtons = document.querySelectorAll(".nav-btn");
+        const pages = document.querySelectorAll(".page");
+        const pageTitle = safeEl("page-title");
+    
+        navButtons.forEach(btn => {
+          btn.addEventListener("click", () => {
+            navButtons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+    
+            const target = btn.getAttribute("data-target");
+    
+            pages.forEach(p => p.classList.remove("active"));
+    
+            const showPage = document.getElementById(target);
+            if (showPage) showPage.classList.add("active");
+    
+            if (pageTitle) pageTitle.textContent = btn.textContent.trim();
+          });
+        });
       });
-    }
+    
+      // ---------------- WEBSOCKET LOGIC ----------------
+      function connectSocket() {
+        if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING))
+          return;
+    
+        socket = new WebSocket(WS_URL);
+    
+        socket.addEventListener("open", () => {
+          if (reconnectTimer) clearTimeout(reconnectTimer);
+          reconnectDelay = RECONNECT_BASE_MS;
+    
+          keepAliveTimer = setInterval(() => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+              socket.send(JSON.stringify({ type: "ping" }));
+            }
+          }, KEEPALIVE_MS);
+        });
+    
+        socket.addEventListener("message", evt => {
+          try {
+            const data = JSON.parse(evt.data);
+            handleWSData(data);
+          } catch (err) {
+            console.error("[WS] Invalid message:", err);
+          }
+        });
+    
+        socket.addEventListener("close", () => {
+          cleanupSocket();
+          scheduleReconnect();
+        });
+    
+        socket.addEventListener("error", () => {
+          cleanupSocket();
+        });
+      }
+    
+      function cleanupSocket() {
+        if (keepAliveTimer) clearInterval(keepAliveTimer);
+      }
+    
+      function scheduleReconnect() {
+        if (reconnectTimer) return;
+    
+        const delay = Math.min(reconnectDelay, RECONNECT_MAX_MS);
+    
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          reconnectDelay *= 1.8;
+          connectSocket();
+        }, delay);
+      }
 
-    // Fetch every 5 seconds
-    fetchData();
-    setInterval(fetchData, 5000);
-  </script>
+      // Keep page alive when it's in the background
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          console.log("[PAGE] Tab is now hidden, keeping connections alive");
+        } else {
+          console.log("[PAGE] Tab is now visible, ensuring connection active");
+          if (!socket || socket.readyState !== WebSocket.OPEN) {
+            connectSocket();
+          }
+        }
+      });
+
+      // Prevent page from unloading or sleeping
+      window.addEventListener("beforeunload", (e) => {
+        // This allows the background tasks to continue
+        return undefined;
+      });
+
+      // Register Service Worker to keep background connections alive
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(err => {
+          console.log("[SW] Service Worker registration failed:", err);
+        });
+      }
+    
+      // ---------------- HANDLE LIVE WEBSOCKET STATS ----------------
+      function handleWSData(data) {
+        const entered = data.entered ?? 0;
+        const exited = data.exited ?? 0;
+        const inside = data.inside ?? 0;
+        const avgWait = data.average_wait_time ?? 0;
+        const totalWait = data.total_wait_time ?? 0;
+    
+        safeSetText("kpi-live", inside);
+        safeSetText("kpi-avg", (avgWait / 60).toFixed(1));
+        safeSetText("kpi-longest", Math.round(totalWait / 60) + "m");
+    
+        safeSetText("home-current", inside);
+    
+        // Display entered and exited stats on home page
+        safeSetText("enter-total", entered);
+        safeSetText("exit-total", exited);
+    
+        // Display total count + alert status
+        safeSetText("home-total", exited);                     // total rows / exited people
+        safeSetText("home-alert", data.is_crowded ? "On" : "Off");
+    
+        const hr = Math.max(1, new Date().getHours());
+        safeSetText("home-rate", Math.round(exited / hr) + " / hr");
+    
+        const lastInfer = safeEl("last-infer");
+        if (lastInfer) lastInfer.textContent = new Date().toLocaleTimeString();
+    
+        pushToChart(inside);
+      }
+    
+      // ---------------- INIT ----------------
+      document.addEventListener("DOMContentLoaded", () => {
+        initChartsSafely();
+        loadRecentEntries();
+        setTimeout(connectSocket, 200);
+    
+        safeSetText("kpi-live", "0");
+        safeSetText("kpi-avg", "0.0");
+        safeSetText("kpi-longest", "0m");
+        safeSetText("home-total", "0");
+
+        // Start polling total count (will stop once WebSocket connects)
+        totalCountPollId = setInterval(loadTotalCount, 2000);
+        
+        // Start polling average wait time (will stop once WebSocket connects)
+        avgWaitPollId = setInterval(loadAvgWaitTime, 2000);
+
+        // Handle contact form submission
+        const contactForm = document.getElementById('contact-form');
+        if (contactForm) {
+          contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('cf-name').value.trim();
+            const email = document.getElementById('cf-email').value.trim();
+            const message = document.getElementById('cf-msg').value.trim();
+
+            if (!name || !email || !message) {
+              alert('Please fill in all fields');
+              return;
+            }
+
+            try {
+              const response = await fetch('http://127.0.0.1:8000/contact/', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, email, message })
+              });
+
+              if (response.ok) {
+                const result = await response.json();
+                alert('✓ Your message has been sent successfully!');
+                contactForm.reset();
+              } else {
+                const error = await response.json();
+                alert('Error: ' + (error.detail || 'Failed to send message'));
+              }
+            } catch (error) {
+              console.error('Contact form error:', error);
+              alert('Error sending message. Please try again.');
+            }
+          });
+        }
+      });
+    
+      window.addEventListener("beforeunload", () => {
+        try { if (socket) socket.close(); } catch {}
+      });
+    
+    })();
+    </script>
+    
 </body>
 </html>

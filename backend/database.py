@@ -1,4 +1,7 @@
 # database.py
+from sqlalchemy.orm.session import Session
+
+
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -16,7 +19,7 @@ DB_PORT = os.getenv("DB_PORT")
 database_url=f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 engine=create_engine(database_url)
-sessionLocal=sessionmaker(bind=engine,autoflush=False,autocommit=False)
+sessionLocal=sessionmaker[Session](bind=engine,autoflush=False,autocommit=False)
 
 Base=declarative_base()
 
